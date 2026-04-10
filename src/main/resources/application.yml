@@ -1,6 +1,12 @@
 spring:
   application:
-    name: yu-ai-coder-mother
+    name: yu-ai-code-mother
+  #mysql
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/yu_ai_code_mother?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&allowPublicKeyRetrieval=true&useSSL=false
+    username: root
+    password: 123456
 server:
   port: 8123
   servlet:
@@ -9,7 +15,7 @@ server:
 springdoc:
   group-configs:
     - group: 'default'
-      packages-to-scan: com.yupi.yuaicodermother.controller
+      packages-to-scan: com.yupi.yuaicodemother.controller
 knife4j:
   enable: true
   setting:

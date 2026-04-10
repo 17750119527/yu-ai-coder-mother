@@ -21,8 +21,8 @@
 
 <script setup lang="ts">
 import { defineComponent } from 'vue';
-import GlobalHeader from './GlobalHeader.vue';
-import GlobalFooter from './GlobalFooter.vue';
+import GlobalHeader from '../components/GlobalHeader.vue';
+import GlobalFooter from '../components/GlobalFooter.vue';
 </script>
 
 <style scoped>
