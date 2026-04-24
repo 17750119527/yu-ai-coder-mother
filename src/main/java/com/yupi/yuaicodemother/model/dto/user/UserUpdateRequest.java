@@ -11,6 +11,8 @@ public class UserUpdateRequest implements Serializable {
     private String userAccount;
     //用户名
     private String userName;
+    // 头像
+    private String userAvatar;
     // 密码
     private String userPassword;
     // 用户角色
