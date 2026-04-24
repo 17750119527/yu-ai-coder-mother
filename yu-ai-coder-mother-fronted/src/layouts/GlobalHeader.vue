@@ -11,20 +11,18 @@
       :selected-keys="selectedKeys"
       @click="handleMenuClick"
       class="header-menu"
-    >
-      <a-menu-item key="home">
-        <router-link to="/">首页</router-link>
-      </a-menu-item>
-      <a-menu-item v-if="isAdmin" key="admin">
-        <router-link to="/admin/user-manage">用户管理</router-link>
-      </a-menu-item>
-    </a-menu>
+      :items="menuItems"
+    />
     <div class="user-info">
       <!-- 已登录状态 -->
       <template v-if="loginUserStore.loginUser">
         <a-dropdown>
           <a-button type="text" class="user-button">
-            <a-avatar size="small" class="user-avatar">
+            <a-avatar
+              :size="28"
+              :src="loginUserStore.loginUser.userAvatar || undefined"
+              class="user-avatar"
+            >
               <template #icon>
                 <UserOutlined />
               </template>
@@ -32,12 +30,10 @@
             <span class="user-name">{{ loginUserStore.loginUser.userName || loginUserStore.loginUser.userAccount }}</span>
           </a-button>
           <template #overlay>
-            <a-menu>
-              <a-menu-item key="profile" @click="router.push('/user/profile')">
-                个人中心
-              </a-menu-item>
+            <a-menu @click="handleDropdownClick">
+              <a-menu-item key="profile">个人中心</a-menu-item>
               <a-menu-divider />
-              <a-menu-item key="logout" @click="handleLogout">退出登录</a-menu-item>
+              <a-menu-item key="logout">退出登录</a-menu-item>
             </a-menu>
           </template>
         </a-dropdown>
@@ -56,11 +52,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, watch, h } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { UserOutlined } from '@ant-design/icons-vue';
 import { useLoginUserStore } from '@/stores/loginUser';
 import { message } from 'ant-design-vue';
+import type { MenuProps } from 'ant-design-vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -69,6 +66,17 @@ const selectedKeys = ref<string[]>(['home']);
 
 const isAdmin = computed(() => loginUserStore.loginUser?.userRole === 'admin');
 
+// 使用 items 属性驱动菜单，解决 v-if 动态菜单项不渲染的问题
+const menuItems = computed<MenuProps['items']>(() => {
+  const items: MenuProps['items'] = [
+    { key: 'home', label: '首页' },
+  ];
+  if (isAdmin.value) {
+    items.push({ key: 'admin', label: '用户管理' });
+  }
+  return items;
+});
+
 const currentKey = computed(() => {
   const path = route.path;
   if (path === '/') return 'home';
@@ -76,8 +84,15 @@ const currentKey = computed(() => {
   return 'home';
 });
 
-const handleMenuClick = (e: any) => {
-  selectedKeys.value = [e.key];
+const handleMenuClick = ({ key }: { key: string }) => {
+  selectedKeys.value = [key];
+  if (key === 'home') router.push('/');
+  if (key === 'admin') router.push('/admin/user-manage');
+};
+
+const handleDropdownClick = ({ key }: { key: string }) => {
+  if (key === 'profile') router.push('/user/profile');
+  if (key === 'logout') handleLogout();
 };
 
 const handleLogout = async () => {
@@ -156,10 +171,6 @@ onMounted(() => {
 .header-menu :deep(.ant-menu-item-selected) {
   color: #22C55E !important;
   border-bottom-color: #22C55E !important;
-}
-
-.header-menu :deep(.ant-menu-item a) {
-  color: inherit;
 }
 
 .user-info {

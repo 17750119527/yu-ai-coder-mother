@@ -8,11 +8,16 @@
     <div class="profile-card">
       <!-- 头像区域 -->
       <div class="avatar-section">
-        <a-avatar :size="80" class="profile-avatar">
-          <template #icon>
-            <UserOutlined />
-          </template>
-        </a-avatar>
+        <div class="avatar-wrapper" @click="editing && triggerAvatarInput()">
+          <a-avatar :size="80" :src="displayAvatar" class="profile-avatar">
+            <template #icon>
+              <UserOutlined />
+            </template>
+          </a-avatar>
+          <div v-if="editing" class="avatar-edit-mask">
+            <CameraOutlined />
+          </div>
+        </div>
         <div class="avatar-info">
           <h2 class="display-name">{{ userStore.loginUser?.userName || userStore.loginUser?.userAccount }}</h2>
           <a-tag v-if="userStore.loginUser?.userRole === 'admin'" color="green">管理员</a-tag>
@@ -47,6 +52,23 @@
       <!-- 编辑模式 -->
       <div v-else class="info-section">
         <a-form layout="vertical" class="edit-form">
+          <a-form-item label="头像">
+            <div class="avatar-edit-row">
+              <a-avatar :size="64" :src="previewAvatar" class="edit-avatar">
+                <template #icon>
+                  <UserOutlined />
+                </template>
+              </a-avatar>
+              <div class="avatar-edit-controls">
+                <a-input
+                  v-model:value="editForm.userAvatar"
+                  placeholder="请输入头像图片链接"
+                  class="dark-input avatar-input"
+                />
+                <span class="avatar-hint">支持输入图片 URL 地址</span>
+              </div>
+            </div>
+          </a-form-item>
           <a-form-item label="昵称">
             <a-input
               v-model:value="editForm.userName"
@@ -75,8 +97,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue';
-import { UserOutlined } from '@ant-design/icons-vue';
+import { ref, reactive, computed, onMounted } from 'vue';
+import { UserOutlined, CameraOutlined } from '@ant-design/icons-vue';
 import { message } from 'ant-design-vue';
 import { useLoginUserStore } from '@/stores/loginUser';
 import { updateUser } from '@/api/user';
@@ -88,11 +110,17 @@ const saving = ref(false);
 const editForm = reactive({
   userName: '',
   userProfile: '',
+  userAvatar: '',
 });
+
+// 当前展示的头像：编辑时用表单值，否则用 store 值
+const displayAvatar = computed(() => userStore.loginUser?.userAvatar || undefined);
+const previewAvatar = computed(() => editForm.userAvatar || undefined);
 
 const startEditing = () => {
   editForm.userName = userStore.loginUser?.userName || '';
   editForm.userProfile = userStore.loginUser?.userProfile || '';
+  editForm.userAvatar = userStore.loginUser?.userAvatar || '';
   editing.value = true;
 };
 
@@ -108,16 +136,20 @@ const handleSave = async () => {
       id: userStore.loginUser.id,
       userName: editForm.userName,
       userProfile: editForm.userProfile,
+      userAvatar: editForm.userAvatar,
     });
     message.success('保存成功');
     editing.value = false;
-    // 重新获取用户信息
     await userStore.fetchLoginUser();
   } catch {
     // 错误已在 request 拦截器中处理
   } finally {
     saving.value = false;
   }
+};
+
+const triggerAvatarInput = () => {
+  // 占位：点击头像时聚焦到 URL 输入框
 };
 
 const formatDate = (dateStr: string | undefined) => {
@@ -171,10 +203,43 @@ onMounted(() => {
   gap: 20px;
 }
 
+.avatar-wrapper {
+  position: relative;
+  cursor: default;
+  flex-shrink: 0;
+}
+
+.avatar-wrapper:has(.avatar-edit-mask) {
+  cursor: pointer;
+}
+
 .profile-avatar {
   background-color: #0F172A;
   color: #22C55E;
-  flex-shrink: 0;
+}
+
+.avatar-edit-mask {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #F8FAFC;
+  font-size: 20px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.avatar-wrapper:hover .avatar-edit-mask {
+  opacity: 1;
+}
+
+.avatar-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .display-name {
@@ -182,7 +247,7 @@ onMounted(() => {
   font-size: 22px;
   font-weight: 600;
   color: #F8FAFC;
-  margin: 0 0 6px;
+  margin: 0;
 }
 
 /* 分割线 */
@@ -252,6 +317,35 @@ onMounted(() => {
   color: #475569;
 }
 
+/* 头像编辑行 */
+.avatar-edit-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.edit-avatar {
+  background-color: #0F172A;
+  color: #22C55E;
+  flex-shrink: 0;
+}
+
+.avatar-edit-controls {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.avatar-input {
+  width: 100%;
+}
+
+.avatar-hint {
+  font-size: 12px;
+  color: #64748B;
+}
+
 .form-actions {
   display: flex;
   gap: 12px;
@@ -287,6 +381,15 @@ onMounted(() => {
   }
 
   .avatar-section {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .avatar-info {
+    align-items: center;
+  }
+
+  .avatar-edit-row {
     flex-direction: column;
     text-align: center;
   }

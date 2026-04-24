@@ -55,6 +55,7 @@ export interface UserUpdateRequest {
   userPassword?: string;
   userRole?: string;
   userProfile?: string;
+  userAvatar?: string;
 }
 
 /** 用户查询请求（管理员分页） */
